@@ -129,8 +129,12 @@ async function createLocalEmbeddingProvider(
           llama = await getLlama({ logLevel: LlamaLogLevel.error });
         }
         if (!embeddingModel) {
+          const activeLlama = llama;
+          if (!activeLlama) {
+            throw new Error("Failed to initialize local embedding runtime");
+          }
           const resolved = await resolveModelFile(modelPath, modelCacheDir || undefined);
-          embeddingModel = await llama.loadModel({ modelPath: resolved });
+          embeddingModel = await activeLlama.loadModel({ modelPath: resolved });
         }
         if (!embeddingContext) {
           embeddingContext = await embeddingModel.createEmbeddingContext();
