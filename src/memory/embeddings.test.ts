@@ -399,6 +399,11 @@ describe("embedding provider local fallback", () => {
     await expect(createLocalProvider()).rejects.toThrow(/provider = "gemini"/i);
     await expect(createLocalProvider()).rejects.toThrow(/provider = "mistral"/i);
   });
+
+  it("mentions npm global install recovery when node-llama-cpp is missing", async () => {
+    mockMissingLocalEmbeddingDependency();
+    await expect(createLocalProvider()).rejects.toThrow(/npm i -g node-llama-cpp@3\.16\.2/i);
+  });
 });
 
 describe("local embedding normalization", () => {
