@@ -186,7 +186,7 @@ describe("runPreparedReply media-only handling", () => {
     expect(call?.followupRun.prompt).toContain("Earlier message in this thread");
   });
 
-  it("preserves transcribed audio text in queued followups", async () => {
+  it("preserves transcribed audio text when preparing followup prompts", async () => {
     const result = await runPreparedReply(
       baseParams({
         ctx: {
