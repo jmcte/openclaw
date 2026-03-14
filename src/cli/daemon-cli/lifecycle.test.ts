@@ -282,6 +282,29 @@ describe("runDaemonRestart health checks", () => {
     expect(killSpy).toHaveBeenCalledWith(4200, "SIGTERM");
   });
 
+  it("ignores ESRCH during lingering Windows stop cleanup", async () => {
+    vi.spyOn(process, "platform", "get").mockReturnValue("win32");
+    const killSpy = vi.spyOn(process, "kill").mockImplementation(() => {
+      const err = new Error("ESRCH") as NodeJS.ErrnoException;
+      err.code = "ESRCH";
+      throw err;
+    });
+    findGatewayPidsOnPortSync.mockReturnValue([4200]);
+    mockSpawnSync.mockReturnValue({
+      error: null,
+      status: 0,
+      stdout:
+        'CommandLine="C:\\\\Program Files\\\\OpenClaw\\\\openclaw.exe" gateway --port 18789\r\n',
+      stderr: "",
+    });
+    runServiceStop.mockResolvedValue(undefined);
+
+    await expect(runDaemonStop({ json: true })).resolves.toBeUndefined();
+
+    expect(findGatewayPidsOnPortSync).toHaveBeenCalledWith(18789);
+    expect(killSpy).toHaveBeenCalledWith(4200, "SIGTERM");
+  });
+
   it("signals a single unmanaged gateway process on restart", async () => {
     vi.spyOn(process, "platform", "get").mockReturnValue("win32");
     const killSpy = vi.spyOn(process, "kill").mockImplementation(() => true);

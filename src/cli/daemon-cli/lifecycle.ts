@@ -118,6 +118,10 @@ function signalGatewayPid(pid: number, signal: "SIGTERM" | "SIGUSR1") {
   process.kill(pid, signal);
 }
 
+function isMissingProcessError(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "ESRCH";
+}
+
 function formatGatewayPidList(pids: number[]): string {
   return pids.join(", ");
 }
@@ -220,7 +224,13 @@ export async function runDaemonStop(opts: DaemonLifecycleOptions = {}) {
   if (process.platform === "win32" && !stopHandledByUnmanagedFallback) {
     // schtasks can report the task as stopped while the previously launched
     // gateway process is still listening. Clean up any lingering listener.
-    await stopGatewayWithoutServiceManager(gatewayPort);
+    try {
+      await stopGatewayWithoutServiceManager(gatewayPort);
+    } catch (error) {
+      if (!isMissingProcessError(error)) {
+        throw error;
+      }
+    }
   }
 }
 
